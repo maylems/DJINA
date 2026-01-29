@@ -1,21 +1,21 @@
-# 🚗 DJINA - Votre Compagnon de Transport
+#  DJINA - Votre Compagnon de Transport
 
 DJINA est une application mobile de transport et livraison développée avec Flutter. Elle offre une expérience utilisateur moderne et intuitive pour tous vos besoins de déplacement au Sénégal.
 
-## ✨ Fonctionnalités
+##  Fonctionnalités
 
-### 🎨 Interface Utilisateur
+###  Interface Utilisateur
 - Design moderne avec thème cohérent
 - Navigation intuitive et fluide
 - Widgets réutilisables pour une expérience uniforme
 - Support des couleurs personnalisées via `AppTheme`
 
-### 🔐 Authentification Complète
+###  Authentification Complète
 - Inscription et connexion sécurisées
 - Vérification par code OTP
 - Gestion des profils utilisateurs
 
-## 🏗️ Architecture
+##  Architecture
 
 L'application suit une architecture Clean Architecture modulaire :
 
@@ -30,7 +30,7 @@ lib/
 │   └── drawer/             # Menu latéral et profil
 ```
 
-## 🎯 Comment Utiliser
+##  Comment Utiliser
 
 ### Installation
 ```bash
@@ -51,25 +51,24 @@ flutter run
 4. **Services** → Pages dédiées pour chaque service
 5. **Profil** → Gestion du compte utilisateur
 
-## 🛠️ Technologies
+##  Technologies
 
 - **Flutter** : Framework de développement
 - **Provider** : Gestion d'état
 - **Clean Architecture** : Structure modulaire
 - **Material Design** : Interface utilisateur
 
-## 🎨 Thème
+##  Thème
 
 L'application utilise un système de thème cohérent :
 - **Couleur Primaire** : Blanc (`AppTheme.primaryColor`)
 - **Couleur Secondaire** : Noir (`AppTheme.secondaryColor`) 
 - **Couleur Accent** : Orange (`AppTheme.cardColor`)
 
-## 📱 Captures d'Écran
+##  Captures d'Écran
 
-*[Ajoutez vos captures d'écran ici]*
 
-## 🚀 Prochaines Étapes
+##  Prochaines Étapes
 
 - [ ] Intégration avec l'API backend
 - [ ] Géolocalisation en temps réel
@@ -77,9 +76,8 @@ L'application utilise un système de thème cohérent :
 - [ ] Notifications push
 - [ ] Mode sombre
 
-## 👥 Équipe
+##  Équipe
 
-Développé avec ❤️ pour faciliter vos déplacements au Sénégal.
 
 ---
 
