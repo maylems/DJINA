@@ -1,4 +1,3 @@
-import 'package:djina_debug/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Widget pour gérer les gestes de l'onboarding
@@ -14,14 +13,6 @@ class OnboardingGestureDetector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: AppTheme.secondaryColor,
-        child: child,
-      ),
-    );
+    return GestureDetector(onTap: onTap, child: child);
   }
 }

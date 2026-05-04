@@ -10,10 +10,8 @@ class SignupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
-      child: const _SignupPageContent(),
-    );
+    // Plus de ChangeNotifierProvider local : utilise le provider global
+    return const _SignupPageContent();
   }
 }
 
@@ -28,10 +26,7 @@ class _SignupPageContent extends StatelessWidget {
           body: SingleChildScrollView(
             child: Column(
               children: [
-                // Header avec image et logo
                 const AuthHeader(),
-
-                // Panneau blanc arrondi avec le formulaire
                 SafeArea(
                   top: false,
                   child: Container(
@@ -42,12 +37,12 @@ class _SignupPageContent extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.only(),
+                      borderRadius: const BorderRadius.only(),
                       boxShadow: [
                         BoxShadow(
                           color: AppTheme.secondaryColor,
                           blurRadius: 8,
-                          offset: Offset(0, -2),
+                          offset: const Offset(0, -2),
                         ),
                       ],
                     ),
@@ -56,7 +51,6 @@ class _SignupPageContent extends StatelessWidget {
                       children: [
                         const SizedBox(height: 4),
 
-                        // Titre
                         const Text(
                           'S\'INSCRIRE',
                           style: TextStyle(
@@ -67,13 +61,11 @@ class _SignupPageContent extends StatelessWidget {
                         ),
                         const SizedBox(height: 22),
 
-                        // Message d'erreur
                         ErrorMessage(
                           message: authProvider.errorMessage,
                           onDismiss: authProvider.clearError,
                         ),
 
-                        // Champ téléphone
                         CustomTextField(
                           controller: authProvider.phoneController,
                           label: 'Numéro de téléphone',
@@ -81,20 +73,34 @@ class _SignupPageContent extends StatelessWidget {
                           keyboardType: TextInputType.phone,
                           prefixText: '+221  |',
                         ),
-
                         const SizedBox(height: 12),
 
-                        // Champ nom complet
                         CustomTextField(
-                          controller: authProvider.fullNameController,
-                          label: 'Nom complet',
-                          hintText: 'Nom complet',
-                          keyboardType: TextInputType.text,
+                          controller: authProvider.firstNameController,
+                          label: 'Prénom',
+                          hintText: 'Votre prénom',
+                          keyboardType: TextInputType.name,
+                          // textCapitalization: TextCapitalization.words,
                         ),
+                        const SizedBox(height: 12),
 
+                        CustomTextField(
+                          controller: authProvider.lastNameController,
+                          label: 'Nom de famille',
+                          hintText: 'Votre nom',
+                          keyboardType: TextInputType.name,
+                          // textCapitalization: TextCapitalization.words,
+                        ),
+                        const SizedBox(height: 12),
+
+                        CustomTextField(
+                          controller: authProvider.emailController,
+                          label: 'Email (optionnel)',
+                          hintText: 'exemple@email.com',
+                          keyboardType: TextInputType.emailAddress,
+                        ),
                         const SizedBox(height: 18),
 
-                        // Champ mot de passe
                         CustomTextField(
                           controller: authProvider.passwordController,
                           label: 'Mot de passe',
@@ -105,22 +111,27 @@ class _SignupPageContent extends StatelessWidget {
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                           ),
-                          onSuffixIconPressed:
-                              () => AuthController.togglePasswordVisibility(context),
+                          onSuffixIconPressed: () =>
+                              AuthController.togglePasswordVisibility(context),
                         ),
-
                         const SizedBox(height: 12),
 
-                        // Checkbox conditions d'utilisation
+                        CustomTextField(
+                          controller: authProvider.referralCodeController,
+                          label: 'Code de parrainage (optionnel)',
+                          hintText: 'Ex: ABC123',
+                          keyboardType: TextInputType.text,
+                          // textCapitalization: TextCapitalization.characters,
+                        ),
+                        const SizedBox(height: 12),
+
                         TermsCheckbox(
                           value: authProvider.acceptTerms,
                           onChanged: (_) =>
                               AuthController.toggleTermsAcceptance(context),
                         ),
-
                         const SizedBox(height: 22),
 
-                        // Bouton d'inscription
                         AuthButton(
                           text: 'Enregistrer',
                           isLoading: authProvider.isSignupLoading,
@@ -128,10 +139,8 @@ class _SignupPageContent extends StatelessWidget {
                               ? () => AuthController.signup(context)
                               : null,
                         ),
-
                         const SizedBox(height: 12),
 
-                        // Lien retour vers connexion
                         GestureDetector(
                           onTap: () => Navigator.of(context).maybePop(),
                           child: const Text(

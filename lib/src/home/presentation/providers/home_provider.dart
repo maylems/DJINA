@@ -1,47 +1,91 @@
-import 'package:flutter/material.dart';
+// src/home/presentation/providers/home_provider.dart
+
+import 'package:flutter/foundation.dart';
+import 'package:djina_debug/src/home/domain/models/place_model.dart';
+
+import '../pages/services/location_service.dart';
+import '../pages/services/place_search_service.dart';
 
 class HomeProvider extends ChangeNotifier {
-  // Contrôleurs pour les champs de recherche
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
+  final LocationService    _locationService = LocationService();
+  final PlaceSearchService _searchService   = PlaceSearchService();
 
-  // État de l'interface
-  String _selectedService = '';
-  bool _isLoading = false;
+  PlaceResult? _departurePlace;
+  PlaceResult? _destinationPlace;
+  String  _selectedService  = 'taxi_voiture';
+  bool    _isLoading        = false;
+  bool    _isLocating       = false;
 
-  // Constructeur avec listeners
+  // Position GPS de l'utilisateur
+  double? _userLat;
+  double? _userLng;
+
+  // ✅ Clé incrémentée pour forcer RecentTrips à se recharger
+  int _tripsRefreshKey = 0;
+
   HomeProvider() {
-    _locationController.addListener(_onTextChanged);
-    _destinationController.addListener(_onTextChanged);
+    _initLocation();
   }
 
-  // Getters publics
-  TextEditingController get locationController => _locationController;
-  TextEditingController get destinationController => _destinationController;
-  String get selectedService => _selectedService;
-  bool get isLoading => _isLoading;
+  // ── Getters ──────────────────────────────────────────────────────────────
 
-  // Validation des champs
+  PlaceResult? get departurePlace   => _departurePlace;
+  PlaceResult? get destinationPlace => _destinationPlace;
+  String       get selectedService  => _selectedService;
+  bool         get isLoading        => _isLoading;
+  bool         get isLocating       => _isLocating;
+  double?      get userLat          => _userLat;
+  double?      get userLng          => _userLng;
+
+  /// RecentTrips écoute cette valeur pour se recharger
+  int get tripsRefreshKey => _tripsRefreshKey;
+
   bool get canSearch =>
-      _locationController.text.trim().isNotEmpty &&
-      _destinationController.text.trim().isNotEmpty &&
-      _selectedService.isNotEmpty;
+      _departurePlace != null && _destinationPlace != null;
 
-  // Données simulées des trajets récents
-  List<Map<String, dynamic>> get recentTrips => [
-        {
-          'title': 'Rue Massanya',
-          'subtitle': 'Corniche Ouest',
-          'icon': 'assets/images/location_icon.png', // Chemin à remplacer
-        },
-        {
-          'title': 'Livraison Soya',
-          'subtitle': 'Plateau',
-          'icon': 'assets/images/delivery_icon.png', // Chemin à remplacer
-        },
-      ];
+  // ── GPS ──────────────────────────────────────────────────────────────────
 
-  void _onTextChanged() {
+  Future<void> _initLocation() async {
+    _isLocating = true;
+    notifyListeners();
+
+    try {
+      final pos = await _locationService.getCurrentPosition();
+      if (pos != null) {
+        _userLat = pos.latitude;
+        _userLng = pos.longitude;
+
+        final place =
+            await _searchService.reverse(pos.latitude, pos.longitude);
+        if (place != null) _departurePlace = place;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Location init error: $e');
+    } finally {
+      _isLocating = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Recherche de lieux ────────────────────────────────────────────────────
+
+  Future<List<PlaceResult>> searchPlaces(String query) {
+    return _searchService.search(
+      query,
+      userLat: _userLat,
+      userLng: _userLng,
+    );
+  }
+
+  // ── Setters ───────────────────────────────────────────────────────────────
+
+  void setDeparturePlace(PlaceResult place) {
+    _departurePlace = place;
+    notifyListeners();
+  }
+
+  void setDestinationPlace(PlaceResult place) {
+    _destinationPlace = place;
     notifyListeners();
   }
 
@@ -52,43 +96,22 @@ class HomeProvider extends ChangeNotifier {
 
   Future<void> searchRide() async {
     if (!canSearch) return;
-
     _isLoading = true;
     notifyListeners();
-
-    try {
-      // Simulation d'une recherche
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // TODO: Implémenter la logique de recherche réelle
-      
-    } catch (e) {
-      // Gestion d'erreur
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    await Future.delayed(const Duration(milliseconds: 500));
+    _isLoading = false;
+    notifyListeners();
   }
 
-  void selectRecentTrip(Map<String, dynamic> trip) {
-    _destinationController.text = trip['title'];
+  /// ✅ Incrémente la clé → RecentTrips se recharge automatiquement
+  void refreshRecentTrips() {
+    _tripsRefreshKey++;
     notifyListeners();
   }
 
   void clearSearch() {
-    _locationController.clear();
-    _destinationController.clear();
-    _selectedService = '';
+    _departurePlace   = null;
+    _destinationPlace = null;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _locationController.removeListener(_onTextChanged);
-    _destinationController.removeListener(_onTextChanged);
-    
-    _locationController.dispose();
-    _destinationController.dispose();
-    super.dispose();
   }
 }

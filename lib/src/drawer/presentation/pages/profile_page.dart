@@ -1,5 +1,7 @@
 import 'package:djina_debug/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:djina_debug/src/auth/presentation/providers/auth_provider.dart';
 import 'package:djina_debug/src/drawer/presentation/widgets/drawer_header.dart';
 import 'package:djina_debug/src/drawer/presentation/widgets/custom_text_field.dart';
 import 'package:djina_debug/src/drawer/presentation/widgets/custom_button.dart';
@@ -20,17 +22,35 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
-  bool _isMrSelected = true; // Mr sélectionné par défaut
+  bool _isMrSelected = true;
 
   @override
   void initState() {
     super.initState();
-    // Pré-remplir avec des valeurs par défaut
-    _nomController.text = 'Nom complet';
-    _surnomController.text = 'Surnom';
-    _dateController.text = '18 Juillet 1995';
-    _emailController.text = 'Email@example.com';
-    _phoneController.text = '00 000 00 00';
+    // Pré-remplir après le premier frame (AuthProvider déjà chargé)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillFromUser();
+    });
+  }
+
+  void _fillFromUser() {
+    final user = context.read<AuthProvider>().currentUser;
+    if (user == null) return;
+
+    _nomController.text = user.firstName ?? '';
+    _surnomController.text = user.lastName ?? '';
+    _emailController.text = user.email;
+
+    // Retire le +221 pour l'affichage dans PhoneField
+    final rawPhone = user.phone.replaceFirst('+221', '').trim();
+    _phoneController.text = rawPhone;
+
+    // La date n'est pas dans UserModel → on garde le placeholder
+    if (_dateController.text.isEmpty) {
+      _dateController.text = '18 Juillet 1995';
+    }
+
+    setState(() {}); // rafraîchit les champs
   }
 
   @override
@@ -50,16 +70,103 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             const CustomDrawerHeader(),
 
-            //principal
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
+                // ← scroll pour éviter overflow sur petits écrans
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── Avatar + nom en haut ───────────────────────────
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final user = authProvider.currentUser;
+                        final displayName = user?.fullName ?? '';
+                        final profileImage = user?.profileImage;
+
+                        return Column(
+                          children: [
+                            Center(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      shape: BoxShape.circle,
+                                      image: profileImage != null
+                                          ? DecorationImage(
+                                              image:
+                                                  NetworkImage(profileImage),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: profileImage == null
+                                        ? Center(
+                                            child: Text(
+                                              _initials(displayName),
+                                              style: const TextStyle(
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  // Bouton caméra
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 26,
+                                      height: 26,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.secondaryColor,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.white, width: 2),
+                                      ),
+                                      child: const Icon(Icons.camera_alt,
+                                          size: 14, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (displayName.isNotEmpty)
+                              Center(
+                                child: Text(
+                                  displayName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                              ),
+                            if (user?.email != null)
+                              Center(
+                                child: Text(
+                                  user!.email,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+
                     // Titre PROFILE
                     const Text(
                       'PROFILE',
@@ -70,18 +177,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         letterSpacing: 1,
                       ),
                     ),
-
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
                     CustomTextField(
                       controller: _nomController,
-                      placeholder: 'Nom complet',
+                      placeholder: 'Prénom',
                     ),
                     const SizedBox(height: 16),
 
                     CustomTextField(
                       controller: _surnomController,
-                      placeholder: 'Surnom',
+                      placeholder: 'Nom de famille',
                     ),
                     const SizedBox(height: 16),
 
@@ -91,11 +197,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: GenderButton(
                             text: 'Mr',
                             isSelected: _isMrSelected,
-                            onTap: () {
-                              setState(() {
-                                _isMrSelected = true;
-                              });
-                            },
+                            onTap: () => setState(() => _isMrSelected = true),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -103,36 +205,30 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: GenderButton(
                             text: 'Mm',
                             isSelected: !_isMrSelected,
-                            onTap: () {
-                              setState(() {
-                                _isMrSelected = false;
-                              });
-                            },
+                            onTap: () => setState(() => _isMrSelected = false),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    // Champ Date
                     CustomTextField(
                       controller: _dateController,
                       placeholder: '18 Juillet 1995',
                     ),
                     const SizedBox(height: 16),
 
-                    // Champ Email
                     CustomTextField(
                       controller: _emailController,
-                      placeholder: 'Email@example.com',
+                      placeholder: 'Email',
                     ),
                     const SizedBox(height: 16),
 
                     PhoneField(controller: _phoneController),
 
-                    const Spacer(),
+                    const SizedBox(height: 40),
 
-                    // Section SUPPRIMER SON COMPTE
+                    // ── Supprimer son compte ───────────────────────────
                     const Text(
                       'SUPPRIMER SON COMPTE',
                       style: TextStyle(
@@ -142,25 +238,22 @@ class _ProfilePageState extends State<ProfilePage> {
                         letterSpacing: 0.5,
                       ),
                     ),
+                    const SizedBox(height: 16),
 
-                    const SizedBox(height: 20),
-
-                    // Bouton Désactiver mon compte
                     CustomButton(
                       text: 'Désactiver mon compte',
                       backgroundColor: AppTheme.cardColor,
                       onPressed: () {
-                        // TODO: A Implémenter désactivation
+                        // TODO: désactivation
                       },
                     ),
-
                     const SizedBox(height: 12),
 
                     CustomButton(
                       text: 'Supprimer mon compte',
                       backgroundColor: Colors.red,
                       onPressed: () {
-                        // TODO: A Implémenter suppression
+                        // TODO: suppression
                       },
                     ),
 
@@ -173,5 +266,13 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 }

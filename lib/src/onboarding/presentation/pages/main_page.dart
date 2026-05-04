@@ -1,6 +1,11 @@
+// presentation/pages/main_page.dart
 import 'package:djina_debug/core/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:djina_debug/src/auth/presentation/providers/auth_provider.dart';
 import 'package:djina_debug/src/onboarding/presentation/controllers/onboarding_controller.dart';
+import 'package:djina_debug/src/onboarding/presentation/providers/onboarding_provider.dart';
+import 'package:djina_debug/config/route_pages.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -11,6 +16,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late final AnimationController _controller;
+  final OnboardingProvider _onboardingProvider = OnboardingProvider();
 
   @override
   void initState() {
@@ -18,21 +24,49 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 2),
     );
 
-    _controller.addStatusListener((status) {
+    _controller.addStatusListener((status) async {
       if (status == AnimationStatus.completed) {
-        OnboardingController.startOnboarding(context);
+        await _routeAfterSplash();
       }
     });
 
     _controller.forward();
   }
 
+  Future<void> _routeAfterSplash() async {
+    if (!mounted) return;
+
+    // ── Étape 1 : onboarding déjà vu ? ──────────────────────────
+    final alreadySeen = await _onboardingProvider.shouldSkipOnboarding();
+    if (!mounted) return;
+
+    if (!alreadySeen) {
+      OnboardingController.startOnboarding(context);
+      return;
+    }
+
+    // ── Étape 2 : token présent dans le storage ? ────────────────
+    // On vérifie UNIQUEMENT la présence du token, sans appeler /me
+    // (l'user sera chargé paresseusement depuis HomePage)
+    final authProvider = context.read<AuthProvider>();
+    final hasToken = await authProvider.hasActiveToken();
+    if (!mounted) return;
+
+    if (hasToken) {
+      // Token trouvé → HomePage (le user se chargera en arrière-plan)
+      Navigator.pushReplacementNamed(context, RoutePages.homepage);
+    } else {
+      OnboardingController.gotoJoinLoginPage(context);
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _onboardingProvider.dispose();
     super.dispose();
   }
 
@@ -41,7 +75,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       body: Stack(
         children: [
-          // Image du taxi en bas
           Positioned(
             bottom: 0,
             left: 0,
@@ -51,14 +84,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               child: Image.asset(AppImages.onboarding1, fit: BoxFit.contain),
             ),
           ),
-
-          // Contenu centré au milieu de l'écran
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "DJINA",
+                  'DJINA',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

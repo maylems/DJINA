@@ -1,48 +1,48 @@
-import 'package:flutter/material.dart';
 import 'package:djina_debug/core/theme/app_theme.dart';
-import 'package:djina_debug/core/utils/constants.dart';
+import 'package:flutter/material.dart';
 
-/// Widget pour les indicateurs de page en bas de l'écran
 class PageIndicators extends StatelessWidget {
   final int currentPage;
+  final int totalPages; // ← dynamique au lieu d'être hardcodé
   final Animation<double> fadeAnimation;
-  final Function(int)? onIndicatorTap;
+  final ValueChanged<int> onIndicatorTap;
 
   const PageIndicators({
     super.key,
     required this.currentPage,
+    required this.totalPages,
     required this.fadeAnimation,
-    this.onIndicatorTap,
+    required this.onIndicatorTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(40.0),
-      child: FadeTransition(
-        opacity: fadeAnimation,
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            OnboardingData.pages.length,
-            (index) => GestureDetector(
-              onTap: onIndicatorTap != null
-                  ? () => onIndicatorTap!(index)
-                  : null,
+          children: List.generate(totalPages, (index) {
+            final isActive = index == currentPage;
+            return GestureDetector(
+              onTap: () => onIndicatorTap(index),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: currentPage == index ? 24 : 8,
-                height: 4,
+                // Largeur élargie sur la slide active (effet pill)
+                width: isActive ? 24 : 8,
+                height: 8,
                 decoration: BoxDecoration(
-                  color: currentPage == index
+                  color: isActive
                       ? AppTheme.primaryColor
                       : AppTheme.primaryColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
         ),
       ),
     );

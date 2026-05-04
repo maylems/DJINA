@@ -6,20 +6,29 @@ import 'package:djina_debug/src/auth/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class LoginPage extends StatefulWidget {
+  /// Email pré-rempli après vérification OTP (flux inscription → login)
+  final String? prefillEmail;
+
+  const LoginPage({super.key, this.prefillEmail});
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
-      child: const _LoginPageContent(),
-    );
-  }
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageContent extends StatelessWidget {
-  const _LoginPageContent();
+class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      authProvider.resetLoginForm();
+
+      if (widget.prefillEmail != null) {
+        authProvider.emailLoginController.text = widget.prefillEmail!;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +39,6 @@ class _LoginPageContent extends StatelessWidget {
           body: SingleChildScrollView(
             child: Column(
               children: [
-                // Header avec image et logo
                 const AuthHeader(),
                 SafeArea(
                   top: false,
@@ -42,12 +50,12 @@ class _LoginPageContent extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.only(),
+                      borderRadius: const BorderRadius.only(),
                       boxShadow: [
                         BoxShadow(
                           color: AppTheme.secondaryColor,
                           blurRadius: 8,
-                          offset: Offset(0, -2),
+                          offset: const Offset(0, -2),
                         ),
                       ],
                     ),
@@ -56,7 +64,6 @@ class _LoginPageContent extends StatelessWidget {
                       children: [
                         const SizedBox(height: 4),
 
-                        // Titre
                         const Text(
                           'SE CONNECTER',
                           style: TextStyle(
@@ -67,24 +74,52 @@ class _LoginPageContent extends StatelessWidget {
                         ),
                         const SizedBox(height: 22),
 
-                        // Message d'erreur
+                        // Bandeau vert après vérification OTP
+                        if (widget.prefillEmail != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green.shade300),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: Colors.green.shade600, size: 18),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Compte vérifié ! Connectez-vous.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         ErrorMessage(
                           message: authProvider.errorMessage,
                           onDismiss: () => AuthController.clearError(context),
                         ),
 
-                        // Champ téléphone
+                        // Email uniquement
                         CustomTextField(
-                          controller: authProvider.phoneController,
-                          label: 'Numéro / Nom',
-                          hintText: '00 000 00 00',
-                          keyboardType: TextInputType.phone,
-                          prefixText: '+221  |',
+                          controller: authProvider.emailLoginController,
+                          label: 'Email',
+                          hintText: 'exemple@email.com',
+                          keyboardType: TextInputType.emailAddress,
                         ),
-
                         const SizedBox(height: 18),
 
-                        // Champ mot de passe
                         CustomTextField(
                           controller: authProvider.passwordController,
                           label: 'Mot de passe',
@@ -98,10 +133,8 @@ class _LoginPageContent extends StatelessWidget {
                           onSuffixIconPressed: () =>
                               AuthController.togglePasswordVisibility(context),
                         ),
-
                         const SizedBox(height: 22),
 
-                        // Bouton de connexion
                         AuthButton(
                           text: 'Connecter',
                           isLoading: authProvider.isLoginLoading,
@@ -109,12 +142,14 @@ class _LoginPageContent extends StatelessWidget {
                               ? () => AuthController.login(context)
                               : null,
                         ),
-
                         const SizedBox(height: 12),
 
-                        // Lien "Créer un compte"
                         GestureDetector(
-                          onTap: () => _navigateToSignup(context),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SignupPage()),
+                          ),
                           child: const Text(
                             'Créer un compte',
                             style: TextStyle(
@@ -133,13 +168,6 @@ class _LoginPageContent extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  void _navigateToSignup(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SignupPage()),
     );
   }
 }

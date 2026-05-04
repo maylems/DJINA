@@ -16,6 +16,11 @@ import 'package:djina_debug/src/onboarding/presentation/pages/join-login_page.da
 // Page d'accueil
 import 'package:djina_debug/src/home/presentation/pages/home_page.dart';
 
+// Pages courses (suivi, appel, notation)
+import 'package:djina_debug/src/home/presentation/pages/ride/ongoing_call_page.dart';
+import 'package:djina_debug/src/home/presentation/pages/ride/ride_tracking_page.dart';
+import 'package:djina_debug/src/home/presentation/pages/ride/rating_page.dart';
+
 /// Service de navigation centralisé
 /// Simplifie la navigation pour les développeurs juniors
 class AppNavigation {
@@ -30,6 +35,9 @@ class AppNavigation {
     RoutePages.otpSignup: (context) => const OtpSignupPage(),
     RoutePages.joinLogin: (context) => const JoinLoginPage(),
     RoutePages.homepage: (context) => const HomePage(),
+    RoutePages.ongoingCall: (context) => const OngoingCallPage(),
+    RoutePages.rideTracking: (context) => const RideTrackingPage(),
+    RoutePages.rate: (context) => const RatingPage(),
   };
 
   /// Navigation simple vers une page

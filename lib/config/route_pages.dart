@@ -16,4 +16,9 @@ class RoutePages {
   // Routes principales - Après connexion
   static const String homepage = '/homepage';
   static const String profile = '/profile';
+
+  // Routes courses - Suivi & notation
+  static const String ongoingCall = '/ongoing-call';
+  static const String rideTracking = '/ride-tracking';
+  static const String rate = '/rate';
 }

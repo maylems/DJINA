@@ -1,195 +1,313 @@
+// presentation/pages/location_permission_page.dart
 import 'package:djina_debug/core/theme/app_theme.dart';
-import 'package:djina_debug/src/onboarding/presentation/controllers/onboarding_controller.dart';
+import 'package:djina_debug/src/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LocationPermissionPage extends StatefulWidget {
   const LocationPermissionPage({super.key});
 
   @override
-  State<LocationPermissionPage> createState() => _LocationPermissionPageState();
+  State<LocationPermissionPage> createState() =>
+      _LocationPermissionPageState();
 }
 
 class _LocationPermissionPageState extends State<LocationPermissionPage>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
+  late final AnimationController _bgController;
+  late final AnimationController _panelController;
+  late final AnimationController _iconController;
 
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  late final Animation<double> _bgFade;
+  late final Animation<Offset> _panelSlide;
+  late final Animation<double> _iconScale;
+  late final Animation<double> _iconFade;
+
+  late final OnboardingProvider _provider;
 
   @override
   void initState() {
     super.initState();
 
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
+    _provider = OnboardingProvider();
 
-    _slideController = AnimationController(
+    _bgController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _panelController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _iconController = AnimationController(
+      vsync: this,
       duration: const Duration(milliseconds: 800),
-      vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    _bgFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _bgController, curve: Curves.easeIn),
     );
 
-    _slideAnimation =
-        Tween<Offset>(
-          begin: const Offset(0, 1.0), // Commence en bas
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
-        );
+    _panelSlide = Tween<Offset>(
+      begin: const Offset(0, 1.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _panelController, curve: Curves.easeOutCubic),
+    );
 
-    _startAnimations();
+    _iconScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.elasticOut),
+    );
+
+    _iconFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.easeIn),
+    );
+
+    _startSequence();
   }
 
-  void _startAnimations() async {
-    _fadeController.forward();
-    await Future.delayed(const Duration(milliseconds: 300));
-    _slideController.forward();
+  void _startSequence() async {
+    _bgController.forward();
+    await Future.delayed(const Duration(milliseconds: 250));
+    _iconController.forward();
+    await Future.delayed(const Duration(milliseconds: 150));
+    _panelController.forward();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
+    _bgController.dispose();
+    _panelController.dispose();
+    _iconController.dispose();
+    _provider.dispose();
     super.dispose();
-  }
-
-  void _handleTap() {
-    // Terminer l'onboarding et aller vers la page joindre ou connexion
-    OnboardingController.gotoJoinLoginPage(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.secondaryColor,
-      body: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: AppTheme.secondaryColor,
-            child: SafeArea(
-              child: Center(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    "DJINA",
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 3,
+    return ChangeNotifierProvider.value(
+      value: _provider,
+      child: Consumer<OnboardingProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            backgroundColor: AppTheme.secondaryColor,
+            body: Stack(
+              children: [
+                // ── Fond avec dégradé animé ──────────────────────────────
+                FadeTransition(
+                  opacity: _bgFade,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.secondaryColor,
+                          AppTheme.secondaryColor.withOpacity(0.85),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          // comment le  dialogue sort du bas pour alerter la localisation
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+
+                // ── Logo DJINA centré (haut) ─────────────────────────────
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 60),
+                      child: FadeTransition(
+                        opacity: _bgFade,
+                        child: Text(
+                          'DJINA',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: Text(
-                          "Autoriser la localisation",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppTheme.secondaryColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
 
-                      Container(
-                        width: double.infinity,
-                        height: 52,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: _handleTap,
-                            child: const Center(
-                              child: Text(
-                                "Autoriser",
-                                style: TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                // ── Icône localisation animée (centre) ───────────────────
+                Center(
+                  child: FadeTransition(
+                    opacity: _iconFade,
+                    child: ScaleTransition(
+                      scale: _iconScale,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.primaryColor.withOpacity(0.15),
+                              border: Border.all(
+                                color: AppTheme.primaryColor.withOpacity(0.4),
+                                width: 2,
                               ),
                             ),
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              size: 52,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Votre position',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── Panneau bas animé ────────────────────────────────────
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: SlideTransition(
+                    position: _panelSlide,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(28),
+                          topRight: Radius.circular(28),
                         ),
                       ),
-
-                      // Bouton Plus tard (transparent avec bordure)
-                      Container(
-                        width: double.infinity,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.grey[400]!,
-                            width: 1,
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Barre de drag visuelle
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 24),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: _handleTap,
-                            child: Center(
-                              child: Text(
-                                "Plus tard",
+
+                          Text(
+                            'Autoriser la localisation',
+                            style: TextStyle(
+                              color: AppTheme.secondaryColor,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          Text(
+                            'DJINA a besoin de votre position pour\ntrouver les trajets près de vous.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Bouton Autoriser
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.secondaryColor,
+                                foregroundColor: AppTheme.primaryColor,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: provider.isRequestingLocation
+                                  ? null
+                                  : () => provider.requestLocationAndComplete(
+                                      context),
+                              child: provider.isRequestingLocation
+                                  ? SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                AppTheme.primaryColor),
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.my_location_rounded,
+                                            size: 20),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Autoriser',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Bouton Plus tard
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
+                                side: BorderSide(color: Colors.grey[300]!),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: provider.isRequestingLocation
+                                  ? null
+                                  : () =>
+                                      provider.skipLocationAndComplete(context),
+                              child: const Text(
+                                'Plus tard',
                                 style: TextStyle(
-                                  color: Colors.grey[700],
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

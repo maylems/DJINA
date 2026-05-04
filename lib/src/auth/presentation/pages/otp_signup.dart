@@ -1,232 +1,289 @@
-import 'package:djina_debug/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../providers/auth_provider.dart';
 
-// Page de vérification OTP avec pin_code_fields
-class OtpSignupPage extends StatefulWidget {
+class OtpSignupPage extends StatelessWidget {
   const OtpSignupPage({super.key});
 
   @override
-  State<OtpSignupPage> createState() => _OtpSignupPageState();
+  Widget build(BuildContext context) {
+    // Récupérer le provider existant au lieu d'en créer un nouveau
+    return const _OtpSignupPageContent();
+  }
 }
 
-class _OtpSignupPageState extends State<OtpSignupPage> {
-  final TextEditingController _otpController = TextEditingController();
-  String _otpCode = '';
+class _OtpSignupPageContent extends StatefulWidget {
+  const _OtpSignupPageContent();
+
+  @override
+  State<_OtpSignupPageContent> createState() => _OtpSignupPageContentState();
+}
+
+class _OtpSignupPageContentState extends State<_OtpSignupPageContent> {
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   @override
   void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  void _updateOtpController(AuthProvider provider) {
+    provider.otpController.text = _controllers.map((c) => c.text).join();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // En-tête avec flèche retour et nom de l'app
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).maybePop(),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: AppTheme.secondaryColor,
-                      size: 20,
-                    ),
-                  ),
-                  const Text(
-                    'DJINA',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.secondaryColor,
-                      letterSpacing: 1,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 20), // Pour équilibrer
-                ],
-              ),
-            ),
-
-            // Contenu principal
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-
-                    // Titre VERIFICATION
-                    Text(
-                      'VERIFICATION',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                        color: AppTheme.cardColor,
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Scaffold(
+          backgroundColor: AppTheme.primaryColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: AppTheme.secondaryColor,
+                          size: 20,
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Champs OTP avec pin_code_fields
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: PinCodeTextField(
-                        appContext: context,
-                        length: 4,
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        textStyle: const TextStyle(
-                          fontSize: 18,
+                      const Text(
+                        'DJINA',
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppTheme.secondaryColor,
+                          letterSpacing: 1,
+                          fontSize: 16,
                         ),
-                        pinTheme: PinTheme(
-                          shape: PinCodeFieldShape.box,
-                          borderRadius: BorderRadius.circular(8),
-                          fieldHeight: 50,
-                          fieldWidth: 50,
-                          borderWidth: 1,
-                          activeBorderWidth: 1.5,
-                          selectedBorderWidth: 1.5,
-                          inactiveBorderWidth: 1,
-                          activeColor: AppTheme.secondaryColor,
-                          selectedColor: AppTheme.secondaryColor,
-                          inactiveColor: AppTheme.secondaryColor,
-                          activeFillColor: AppTheme.primaryColor,
-                          selectedFillColor: AppTheme.primaryColor,
-                          inactiveFillColor: AppTheme.primaryColor,
-                        ),
-                        enableActiveFill: true,
-                        onChanged: (value) {
-                          setState(() {
-                            _otpCode = value;
-                          });
-                        },
-
-                        onCompleted: (value) {
-                          setState(() {
-                            _otpCode = value;
-                          });
-                        },
                       ),
-                    ),
+                      const SizedBox(width: 20),
+                    ],
+                  ),
+                ),
 
-                    const SizedBox(height: 32),
+                // Contenu
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
 
-                    // Bouton Valider
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.secondaryColor,
-                          foregroundColor: AppTheme.primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _validateOtp,
-                        child: const Text(
-                          'Valider',
+                        // Titre
+                        const Text(
+                          'VERIFICATION',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
+                            color: AppTheme.cardColor,
                           ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 8),
+                        const SizedBox(height: 20),
 
-                    // Texte "Expire dans 30s"
-                    const Center(
-                      child: Text(
-                        'Expire dans 30s',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.secondaryColor,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Lien "Renvoyer un autre code OTP"
-                    Center(
-                      child: GestureDetector(
-                        onTap: _resendOtp,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.secondaryColor),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Renvoyer un autre code OTP',
-                            style: TextStyle(
+                        // Numéro de téléphone
+                        if (authProvider.pendingPhone != null)
+                          Text(
+                            'Code envoyé au ${authProvider.pendingPhone}',
+                            style: const TextStyle(
                               fontSize: 13,
                               color: AppTheme.secondaryColor,
                             ),
                           ),
+
+                        const SizedBox(height: 32),
+
+                        // Champs OTP (6 chiffres)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(6, (index) {
+                            return SizedBox(
+                              width: 45,
+                              height: 50,
+                              child: TextField(
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                maxLength: 1,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.secondaryColor,
+                                ),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  filled: true,
+                                  fillColor: AppTheme.primaryColor,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.secondaryColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.secondaryColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (value) {
+                                  if (value.length == 1) {
+                                    if (index < 5) {
+                                      _focusNodes[index + 1].requestFocus();
+                                    } else {
+                                      _focusNodes[index].unfocus();
+                                    }
+                                  } else if (value.isEmpty && index > 0) {
+                                    _focusNodes[index - 1].requestFocus();
+                                  }
+                                  _updateOtpController(authProvider);
+                                },
+                              ),
+                            );
+                          }),
                         ),
-                      ),
+
+                        const SizedBox(height: 32),
+
+                        // Bouton Valider
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.secondaryColor,
+                              foregroundColor: AppTheme.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: authProvider.isOtpLoading
+                                ? null
+                                : () => authProvider.verifyOtp(context),
+                            child: authProvider.isOtpLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Valider',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Timer
+                        if (authProvider.otpSecondsRemaining > 0)
+                          Center(
+                            child: Text(
+                              'Expire dans ${authProvider.formattedOtpTime}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.secondaryColor,
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Bouton Renvoyer
+                        Center(
+                          child: GestureDetector(
+                            onTap: authProvider.isResendingOtp ||
+                                    authProvider.otpSecondsRemaining > 240
+                                ? null
+                                : () {
+                                    for (var controller in _controllers) {
+                                      controller.clear();
+                                    }
+                                    authProvider.resendOtp(context);
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: authProvider.otpSecondsRemaining > 240
+                                      ? Colors.grey
+                                      : AppTheme.secondaryColor,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: authProvider.isResendingOtp
+                                  ? const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      'Renvoyer un autre code OTP',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            authProvider.otpSecondsRemaining >
+                                                    240
+                                                ? Colors.grey
+                                                : AppTheme.secondaryColor,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+                      ],
                     ),
-
-                    const Spacer(),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-  }
-
-  // Valider le code OTP
-  void _validateOtp() {
-    // Vérifier que le widget est encore monté
-    if (!mounted) return;
-
-    if (_otpCode.length == 4) {
-      // Logique de validation réelle
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Code OTP validé: $_otpCode')));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez saisir les 4 chiffres')),
-      );
-    }
-  }
-
-  // Renvoyer un nouveau code OTP
-  void _resendOtp() {
-    // Vérifier que le widget est encore monté avant d'utiliser le contrôleur
-    if (!mounted) return;
-
-    // Vider le champ OTP
-    _otpController.clear();
-    setState(() {
-      _otpCode = '';
-    });
-
-    // Logique de renvoi réelle
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Nouveau code OTP envoyé')));
   }
 }

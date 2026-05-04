@@ -1,3 +1,4 @@
+// presentation/pages/onboarding_screens.dart
 import 'package:djina_debug/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -41,17 +42,23 @@ class _OnboardingScreensState extends State<OnboardingScreens>
               child: SafeArea(
                 child: Column(
                   children: [
+                    // ── Header original ──────────────────────────────────
                     OnboardingHeader(fadeAnimation: provider.fadeAnimation),
 
+                    // ── PageView dynamique (remplace les slides fixes) ───
                     OnboardingContent(
                       pageController: provider.pageController,
                       fadeAnimation: provider.fadeAnimation,
                       slideAnimation: provider.slideAnimation,
                       onPageChanged: provider.onPageChanged,
+                      // slides injectées dynamiquement depuis OnboardingData
+                      slides: provider.slides,
                     ),
 
+                    // ── Indicateurs originaux ────────────────────────────
                     PageIndicators(
                       currentPage: provider.currentPage,
+                      totalPages: provider.slides.length,
                       fadeAnimation: provider.fadeAnimation,
                       onIndicatorTap: provider.goToPage,
                     ),
@@ -66,8 +73,8 @@ class _OnboardingScreensState extends State<OnboardingScreens>
   }
 }
 
+// Conservé pour compatibilité avec les anciens imports
 class OnboardingData {
   final String title;
-
   OnboardingData({required this.title});
 }

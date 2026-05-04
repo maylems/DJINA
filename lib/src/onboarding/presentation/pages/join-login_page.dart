@@ -1,5 +1,6 @@
 import 'package:djina_debug/core/theme/app_theme.dart';
 import 'package:djina_debug/core/utils/constants.dart';
+import 'package:djina_debug/src/auth/presentation/pages/signup_page.dart';
 import 'package:djina_debug/src/onboarding/presentation/controllers/onboarding_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -11,9 +12,17 @@ class JoinLoginPage extends StatefulWidget {
 }
 
 class _JoinLoginPageState extends State<JoinLoginPage> {
-  // pour aller a la page de connexion
-  void _handleTap() {
+  // Pour aller à la page de connexion
+  void _handleLogin() {
     OnboardingController.gotoLoginPage(context);
+  }
+
+  // Pour aller à la page d'inscription
+  void _handleSignup() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupPage()),
+    );
   }
 
   @override
@@ -40,21 +49,9 @@ class _JoinLoginPageState extends State<JoinLoginPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Bouton Joindre
+                // Bouton Joindre (Inscription)
                 GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Fonctionalite non disponible",
-                          style: TextStyle(color: AppTheme.secondaryColor),
-                        ),
-                        duration: Duration(seconds: 2),
-                        backgroundColor: AppTheme.primaryColor,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
+                  onTap: _handleSignup,
                   child: Container(
                     width: 220,
                     height: 40,
@@ -63,7 +60,7 @@ class _JoinLoginPageState extends State<JoinLoginPage> {
                       borderRadius: BorderRadius.circular(2),
                       border: Border.all(color: AppTheme.primaryColor),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         "Joindre",
                         style: TextStyle(
@@ -76,6 +73,7 @@ class _JoinLoginPageState extends State<JoinLoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
                 // Bouton Se connecter
                 Container(
                   width: 220,
@@ -88,9 +86,7 @@ class _JoinLoginPageState extends State<JoinLoginPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.secondaryColor,
                     ),
-                    onPressed: () {
-                      _handleTap();
-                    },
+                    onPressed: _handleLogin,
                     child: const Text(
                       "Se connecter",
                       style: TextStyle(

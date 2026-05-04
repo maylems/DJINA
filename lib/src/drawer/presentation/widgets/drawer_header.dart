@@ -11,7 +11,7 @@ class CustomDrawerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 80,
-      color: AppTheme.primaryColor,
+      color: AppTheme.primaryColor, // Retour au fond d'origine (noir dans ton thème)
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -43,7 +43,7 @@ class CustomDrawerHeader extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            const SizedBox(width: 20), // Pour équilibrer
+            const SizedBox(width: 20),
           ],
         ),
       ),
